@@ -314,7 +314,7 @@ def selected_model():
                     reconstruction_loss = np.mean((X-X_recon)**2,axis=1)
                     return reconstruction_loss
                 
-                st.markdown("Histogram for the reconstruction loss of the Fault Free data")
+                st.subheader("Histogram for the reconstruction loss of the Fault Free data")
                 Training_reconstruction_loss = recon_loss(pca=pca_redunction,X=X_train_scaled)
                 plt.figure(figsize=(8, 4))
                 plt.hist(Training_reconstruction_loss, bins=100,label='Train',alpha=1)
@@ -323,7 +323,7 @@ def selected_model():
                 plt.show()
                 st.pyplot(plt.gcf()) 
 
-                st.markdown("Histogram for the reconstruction loss of the Faulty data")
+                st.subheader("Histogram for the reconstruction loss of the Faulty data")
                 Validation_reconstruction_loss = recon_loss(pca=pca_redunction,X=X_test_scaled)
                 plt.figure(figsize=(8, 4))
                 plt.hist(Validation_reconstruction_loss, bins=100,label='Val',alpha=1)
@@ -448,7 +448,7 @@ def selected_model():
                     reconstruction_loss = np.mean((X-X_pred)**2,axis=1)
                     return reconstruction_loss
 
-                st.markdown("Histogram for the reconstruction loss of the Fault Free data")
+                st.subheader("Histogram for the reconstruction loss of the Fault Free data")
                 Training_reconstruction_loss = recon_loss(NN=autoencoder,X=X_train_scaled)
                 plt.figure(figsize=(8, 4))
                 plt.hist(Training_reconstruction_loss, bins=100,label='Train',alpha=1)
@@ -457,7 +457,7 @@ def selected_model():
                 st.pyplot(plt.gcf())
 
 
-                st.markdown("Histogram for the reconstruction loss of the Faulty data")
+                st.subheader("Histogram for the reconstruction loss of the Faulty data")
                 Validation_reconstruction_loss = recon_loss(NN=autoencoder,X=X_test_scaled)
                 plt.figure(figsize=(8, 4))
                 plt.hist(Validation_reconstruction_loss, bins=100,label='Val',alpha=1)
@@ -466,7 +466,7 @@ def selected_model():
                 plt.show()
                 st.pyplot(plt.gcf())
 
-                st.markdown("Fault detection using residuals for the entire data using threshold")
+                st.subheader("Fault detection using residuals for the entire data using threshold")
                 threshold = round(max(Training_reconstruction_loss),2)
                 EntireData = df.iloc[:,2:]
                 EntireData_scaled = sc.transform(EntireData)
@@ -500,88 +500,88 @@ def selected_model():
                 Accuarcy = (selected_rows.shape[0]-(sum(selected_rows['failure_label'] == 0))) / selected_rows.shape[0]
                 st.write(f"Accuarcy = <span style='color: red;'>{Accuarcy}</span>", unsafe_allow_html=True)
 
-        if selected_model == "K MEANS":
+            if selected_model == "K MEANS":
 
-            # Read the two files
-            df1 = pd.read_csv('hfm_10cols.csv')
-            df2 = pd.read_csv('hfm_14cols.csv')
-            df3 = df2.drop(columns = ['Unnamed: 14','Unnamed: 15','label','time'])
-            df = pd.concat([df1,df3], axis=1)
-            df = df[['time','failure_label','sensor_1','sensor_2','sensor_3','sensor_4','sensor_5','sensor_6','sensor_7','sensor_8','sensor_9','sensor_10','sensor_11','sensor_12','sensor_13','sensor_14','sensor_15','sensor_16','sensor_17','sensor_18','sensor_19','sensor_20']]
-            df['time'] = pd.to_datetime(df['time'])
-            df = df.drop(columns = ['sensor_4','sensor_5','sensor_9','sensor_15','sensor_17','sensor_18'])
-            df_normal = df[df['failure_label']==0]
-            df_failure = df[df['failure_label']==1]
-            # Train and test data
-            X_train = df_normal.iloc[:,2:]
-            X_fault = df_failure.iloc[:,2:]
-            # Scaling the data
-            from sklearn.preprocessing import StandardScaler
-            sc = StandardScaler()
-            X_train_scaled = sc.fit_transform(X_train)
-            X_test_scaled = sc.transform(X_fault)
+                # Read the two files
+                df1 = pd.read_csv('hfm_10cols.csv')
+                df2 = pd.read_csv('hfm_14cols.csv')
+                df3 = df2.drop(columns = ['Unnamed: 14','Unnamed: 15','label','time'])
+                df = pd.concat([df1,df3], axis=1)
+                df = df[['time','failure_label','sensor_1','sensor_2','sensor_3','sensor_4','sensor_5','sensor_6','sensor_7','sensor_8','sensor_9','sensor_10','sensor_11','sensor_12','sensor_13','sensor_14','sensor_15','sensor_16','sensor_17','sensor_18','sensor_19','sensor_20']]
+                df['time'] = pd.to_datetime(df['time'])
+                df = df.drop(columns = ['sensor_4','sensor_5','sensor_9','sensor_15','sensor_17','sensor_18'])
+                df_normal = df[df['failure_label']==0]
+                df_failure = df[df['failure_label']==1]
+                # Train and test data
+                X_train = df_normal.iloc[:,2:]
+                X_fault = df_failure.iloc[:,2:]
+                # Scaling the data
+                from sklearn.preprocessing import StandardScaler
+                sc = StandardScaler()
+                X_train_scaled = sc.fit_transform(X_train)
+                X_test_scaled = sc.transform(X_fault)
 
-            # Define the number of clusters
-            k = 1
+                # Define the number of clusters
+                k = 1
 
-            # Fit k-means clustering model
-            kmeans = KMeans(n_clusters=k).fit(X_train_scaled)
+                # Fit k-means clustering model
+                kmeans = KMeans(n_clusters=k).fit(X_train_scaled)
 
-            # Function to calculate the Distance of Fault free data from centre
-            def distanceFromCenter(cluster_center,X):
-                p_dist=[]
-                for i in range(len(X)):
-                    dist= pairwise_distances(cluster_center, X[i].reshape(1, -1))
-                    p_dist.append(dist)
-                return np.array(p_dist).reshape(-1)
+                # Function to calculate the Distance of Fault free data from centre
+                def distanceFromCenter(cluster_center,X):
+                    p_dist=[]
+                    for i in range(len(X)):
+                        dist= pairwise_distances(cluster_center, X[i].reshape(1, -1))
+                        p_dist.append(dist)
+                    return np.array(p_dist).reshape(-1)
 
-            st.markdown("Histogram for the reconstruction loss of the Fault Free data")
-            Training_reconstruction_loss=distanceFromCenter(cluster_center=kmeans.cluster_centers_,X=X_train_scaled)
+                st.subheader("Histogram for the reconstruction loss of the Fault Free data")
+                Training_reconstruction_loss=distanceFromCenter(cluster_center=kmeans.cluster_centers_,X=X_train_scaled)
 
-            plt.rcParams['figure.figsize'] = [4, 4]
-            plt.hist(Training_reconstruction_loss, bins=100,label='FaultFree',alpha=1)
-            plt.legend()
-            plt.show()
-            st.pyplot(plt.gcf())
+                plt.rcParams['figure.figsize'] = [4, 4]
+                plt.hist(Training_reconstruction_loss, bins=100,label='FaultFree',alpha=1)
+                plt.legend()
+                plt.show()
+                st.pyplot(plt.gcf())
 
-            st.markdown("Histogram for the reconstruction loss of the Faulty data")
-            faulty_dist = distanceFromCenter(cluster_center=kmeans.cluster_centers_,X=X_test_scaled)
-            plt.rcParams['figure.figsize'] = [4, 4]
-            plt.hist(faulty_dist, bins=100,label='FaultFree',alpha=1)
-            plt.legend()
-            plt.show()
-            st.pyplot(plt.gcf())
+                st.subheader("Histogram for the reconstruction loss of the Faulty data")
+                faulty_dist = distanceFromCenter(cluster_center=kmeans.cluster_centers_,X=X_test_scaled)
+                plt.rcParams['figure.figsize'] = [4, 4]
+                plt.hist(faulty_dist, bins=100,label='FaultFree',alpha=1)
+                plt.legend()
+                plt.show()
+                st.pyplot(plt.gcf())
 
-            # Fault detection using residuals for the entire data using threshold
-            threshold = math.ceil(max(Training_reconstruction_loss))
-            EntireData = df.iloc[:,2:]
-            EntireData_scaled = sc.transform(EntireData)
-            EntireData_reconstruction_loss = distanceFromCenter(cluster_center=kmeans.cluster_centers_,X=EntireData_scaled)
+                # Fault detection using residuals for the entire data using threshold
+                threshold = math.ceil(max(Training_reconstruction_loss))
+                EntireData = df.iloc[:,2:]
+                EntireData_scaled = sc.transform(EntireData)
+                EntireData_reconstruction_loss = distanceFromCenter(cluster_center=kmeans.cluster_centers_,X=EntireData_scaled)
 
-            plt.rcParams['figure.figsize'] = [8, 3]
-            plt.plot(EntireData_reconstruction_loss,label=f'recon_loss')
-            plt.axhline(threshold,c='r',label='threshold')    #threshold value
+                plt.rcParams['figure.figsize'] = [8, 3]
+                plt.plot(EntireData_reconstruction_loss,label=f'recon_loss')
+                plt.axhline(threshold,c='r',label='threshold')    #threshold value
 
-            plt.title(f'Fault Detection using K-Means')
-            plt.ylim(0, 25)
-            plt.legend()
-            plt.show()
-            st.pyplot(plt.gcf())
+                plt.title(f'Fault Detection using K-Means')
+                plt.ylim(0, 25)
+                plt.legend()
+                plt.show()
+                st.pyplot(plt.gcf())
 
-            # Counting number of samples above threshold
-            mask = np.array(EntireData_reconstruction_loss) >= threshold
-            count_true = np.sum(mask)
-            indices = np.where(mask)
-            selected_rows = df.iloc[indices]       
-            st.write(f"Number of samples above threshold = <span style='color: red;'>{selected_rows.shape[0]}</span>", unsafe_allow_html=True)
+                # Counting number of samples above threshold
+                mask = np.array(EntireData_reconstruction_loss) >= threshold
+                count_true = np.sum(mask)
+                indices = np.where(mask)
+                selected_rows = df.iloc[indices]       
+                st.write(f"Number of samples above threshold = <span style='color: red;'>{selected_rows.shape[0]}</span>", unsafe_allow_html=True)
 
 
-            # Counting number of faults detected by model
-            num2 = (selected_rows.shape[0]-(sum(selected_rows['failure_label'] == 0)))
-            st.write(f"Number of faults detected by model = <span style='color: red;'>{num2}</span>", unsafe_allow_html=True)
+                # Counting number of faults detected by model
+                num2 = (selected_rows.shape[0]-(sum(selected_rows['failure_label'] == 0)))
+                st.write(f"Number of faults detected by model = <span style='color: red;'>{num2}</span>", unsafe_allow_html=True)
 
-            Accuarcy = (selected_rows.shape[0]-(sum(selected_rows['failure_label'] == 0))) / selected_rows.shape[0]
-            st.write(f"Accuarcy = <span style='color: red;'>{Accuarcy}</span>", unsafe_allow_html=True)
+                Accuarcy = (selected_rows.shape[0]-(sum(selected_rows['failure_label'] == 0))) / selected_rows.shape[0]
+                st.write(f"Accuarcy = <span style='color: red;'>{Accuarcy}</span>", unsafe_allow_html=True)
 
 
 selected_model()
